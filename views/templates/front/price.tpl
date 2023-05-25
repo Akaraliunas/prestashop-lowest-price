@@ -1,0 +1,1 @@
+<span class="regular-price updated" aria-label="{l s='Regular price' d='Shop.Theme.Catalog'}">{$product.regular_price}</span>
