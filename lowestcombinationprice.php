@@ -20,9 +20,6 @@ class LowestCombinationPrice extends Module
 
         $this->displayName = $this->trans('Lowest Price', [], 'Modules.Lowestcombinationprice.Admin');
         $this->description = $this->trans('Display the lowest price for product with combinations.', [], 'Modules.Lowestcombinationprice.Admin');
-
-        // $this->displayName = $this->l('Lowest Price');
-        // $this->description = $this->l('Display the lowest price for product with combinations.');
     }
 
     public function install()
@@ -55,20 +52,20 @@ class LowestCombinationPrice extends Module
      */
     public function hookDisplayProductPriceBlock($params)
     {
+        $pages = ['index', 'category'];
         $productId = (int) $params['product']['id_product'];
         $product = new Product($productId);
-        $pages = [
-            'index',
-            'category',
-        ];
         $combinations = $product->getAttributeCombinations(
             $this->context->language->id
         );
 
-        if (count($combinations) > 0 && (in_array($this->context->controller->php_self, $pages))) {
+        if (
+            count($combinations) > 0
+            && (in_array($this->context->controller->php_self, $pages))
+        ) {
             $lowestPrice = $this->getLowestCombinationPrice($product, $combinations);
 
-            if ($params['type'] == 'custom_price' && $lowestPrice) {
+            if ($lowestPrice && $params['type'] == 'custom_price') {
                 $this->context->smarty->assign('lowest_price', $lowestPrice);
                 $this->context->smarty->assign('product', $params['product']);
 
