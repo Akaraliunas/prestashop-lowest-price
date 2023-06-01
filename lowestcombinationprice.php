@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
 
 class LowestCombinationPrice extends Module
 {
+    private $templateFile;
+    
     public function __construct()
     {
         $this->name = 'lowestcombinationprice';
@@ -20,6 +22,9 @@ class LowestCombinationPrice extends Module
 
         $this->displayName = $this->trans('Lowest Price', [], 'Modules.Lowestcombinationprice.Admin');
         $this->description = $this->trans('Display the lowest price for product with combinations.', [], 'Modules.Lowestcombinationprice.Admin');
+
+        $this->templateFile = 'module:lowestcombinationprice/views/templates/front/custom_price.tpl';
+
     }
 
     public function install()
@@ -55,28 +60,26 @@ class LowestCombinationPrice extends Module
         $pages = ['index', 'category'];
         $productId = (int) $params['product']['id_product'];
         $product = new Product($productId);
-        $combinations = $product->getAttributeCombinations(
-            $this->context->language->id
-        );
+        $combinations = $product->getAttributeCombinations($this->context->language->id);
+        $cacheId = 'lowestcombinationprice_' . $productId;
 
-        if (
-            count($combinations) > 0
-            && (in_array($this->context->controller->php_self, $pages))
-        ) {
+        if (count($combinations) > 0 && in_array($this->context->controller->php_self, $pages)) {
             $lowestPrice = $this->getLowestCombinationPrice($product, $combinations);
 
             if ($lowestPrice && $params['type'] == 'custom_price') {
-                $this->context->smarty->assign('lowest_price', $lowestPrice);
-                $this->context->smarty->assign('product', $params['product']);
-
-                return $this->fetch('module:lowestcombinationprice/views/templates/front/custom_price.tpl');
+                if (!$this->isCached($this->templateFile, $cacheId)) {
+                    $this->context->smarty->assign('lowest_price', $lowestPrice);
+                    $this->context->smarty->assign('product', $params['product']);
+                }
+    
+                return $this->fetch($this->templateFile, $cacheId);
             }
         }
 
         if ($params['type'] == 'old_price' && !$combinations) {
             $this->context->smarty->assign('product', $params['product']);
 
-            return $this->fetch('module:lowestcombinationprice/views/templates/front/price.tpl');
+            return $this->fetch('module:lowestcombinationprice/views/templates/front/price.tpl', $cacheId);
         }
     }
 
